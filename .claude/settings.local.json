@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(timeout 15 npm run dev)",
+      "Bash(start http://localhost:3001/ordini)",
+      "Bash(powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen | ForEach-Object { $bitmap = New-Object System.Drawing.Bitmap\\($_Bounds.Width, $_Bounds.Height\\); $graphics = [System.Drawing.Graphics]::FromImage\\($bitmap\\); $graphics.CopyFromScreen\\($_Bounds.Location, [System.Drawing.Point]::Empty, $_Bounds.Size\\); $bitmap.Save\\(''C:\\\\Users\\\\Pc Soggiorno\\\\ottica-balestrieri\\\\screenshot.png''\\); }\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\Pc Soggiorno\\\\ottica-balestrieri\\\\screenshot.ps1\")",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
