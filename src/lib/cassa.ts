@@ -4,9 +4,9 @@
  */
 
 // Configurazione WposWS
-// L'indirizzo deve corrispondere a quello configurato in WposActiveModeService
+// Usa 127.0.0.1 perché il browser gira sulla stessa macchina del servizio WposWS
 const WPOS_CONFIG = {
-  baseUrl: 'https://192.168.1.4/WposWS',
+  baseUrl: 'https://127.0.0.1/WposWS',
   printerId: '1',
   timeout: 10000,
 }
