@@ -16,6 +16,7 @@ import {
   Settings,
   Eye,
   X,
+  Banknote,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Buste Lavoro', href: '/buste-lavoro', icon: Briefcase },
   { name: 'Appuntamenti', href: '/appuntamenti', icon: Calendar },
   { name: 'Vendite', href: '/vendite', icon: Receipt },
+  { name: 'Cassa', href: '/cassa', icon: Banknote },
   { name: 'Fatture', href: '/fatture', icon: FileText },
   { name: 'Report', href: '/report', icon: FileBarChart },
 ]
