@@ -104,6 +104,102 @@ function formatDiottria(value: number | null): string {
   return `${sign}${value.toFixed(2)}`
 }
 
+// Componente per visualizzare l'asse nel sistema TABO
+interface ViewAxisSemicircleProps {
+  axis: number | null
+  eye: 'OD' | 'OS'
+  label?: string
+  color?: string
+  size?: 'sm' | 'md'
+}
+
+function ViewAxisSemicircle({ axis, eye, label = '', color = '#F97316', size = 'md' }: ViewAxisSemicircleProps) {
+  if (axis === null) return null
+
+  const width = size === 'sm' ? 100 : 140
+  const height = size === 'sm' ? 60 : 80
+  const radius = size === 'sm' ? 40 : 55
+  const cx = width / 2
+  const cy = height - 5
+
+  // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
+  // Per OD: l'arco va da 180° (sinistra) a 0° (destra)
+  // Per OS: speculare
+  const angleRad = (Math.PI * (180 - axis)) / 180
+  const lineLength = radius - 5
+  const x2 = cx + lineLength * Math.cos(angleRad)
+  const y2 = cy - lineLength * Math.sin(angleRad)
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={width} height={height} className="overflow-visible">
+        {/* Semicerchio base */}
+        <path
+          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+          fill="none"
+          stroke="#D1D5DB"
+          strokeWidth="2"
+        />
+
+        {/* Tacche gradi */}
+        {[0, 30, 60, 90, 120, 150, 180].map((deg) => {
+          const rad = (Math.PI * (180 - deg)) / 180
+          const x1 = cx + (radius - 3) * Math.cos(rad)
+          const y1 = cy - (radius - 3) * Math.sin(rad)
+          const x2t = cx + (radius + 3) * Math.cos(rad)
+          const y2t = cy - (radius + 3) * Math.sin(rad)
+          return (
+            <g key={deg}>
+              <line x1={x1} y1={y1} x2={x2t} y2={y2t} stroke="#9CA3AF" strokeWidth="1" />
+              <text
+                x={cx + (radius + 12) * Math.cos(rad)}
+                y={cy - (radius + 12) * Math.sin(rad)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={size === 'sm' ? '8' : '9'}
+                fill="#6B7280"
+              >
+                {deg}°
+              </text>
+            </g>
+          )
+        })}
+
+        {/* Linea indicatore asse */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={x2}
+          y2={y2}
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+
+        {/* Punto centrale */}
+        <circle cx={cx} cy={cy} r="4" fill={color} />
+
+        {/* Label */}
+        {label && (
+          <text
+            x={cx}
+            y={cy - radius - 18}
+            textAnchor="middle"
+            fontSize={size === 'sm' ? '10' : '12'}
+            fontWeight="bold"
+            fill={color}
+          >
+            {label}
+          </text>
+        )}
+      </svg>
+      <span className="text-xs font-mono mt-1" style={{ color }}>
+        {axis}°
+      </span>
+    </div>
+  )
+}
+
 // Configurazione righe
 const righeConfig: { key: TipoRiga; label: string; short: string; color: string; hasAdd: boolean }[] = [
   { key: 'lontano', label: 'Lontano', short: 'L', color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300', hasAdd: false },
@@ -745,6 +841,54 @@ export default function PrescrizioniPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Diagrammi Assi - Sistema TABO */}
+            {(selectedPrescrizione.lontano_od_ax || selectedPrescrizione.lontano_os_ax) && (
+              <div className="grid grid-cols-2 gap-6 p-4 bg-stone-50 dark:bg-stone-900 rounded-xl">
+                {/* OD */}
+                <div className="flex flex-col items-center">
+                  <p className="text-sm font-medium text-primary mb-2">OD - Occhio Destro</p>
+                  <ViewAxisSemicircle
+                    axis={selectedPrescrizione.lontano_od_ax}
+                    eye="OD"
+                    label="L"
+                    color="#3B82F6"
+                  />
+                  {selectedPrescrizione.vicino_od_ax && selectedPrescrizione.vicino_od_ax !== selectedPrescrizione.lontano_od_ax && (
+                    <div className="mt-2">
+                      <ViewAxisSemicircle
+                        axis={selectedPrescrizione.vicino_od_ax}
+                        eye="OD"
+                        label="V"
+                        color="#22C55E"
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+                {/* OS */}
+                <div className="flex flex-col items-center">
+                  <p className="text-sm font-medium text-secondary mb-2">OS - Occhio Sinistro</p>
+                  <ViewAxisSemicircle
+                    axis={selectedPrescrizione.lontano_os_ax}
+                    eye="OS"
+                    label="L"
+                    color="#3B82F6"
+                  />
+                  {selectedPrescrizione.vicino_os_ax && selectedPrescrizione.vicino_os_ax !== selectedPrescrizione.lontano_os_ax && (
+                    <div className="mt-2">
+                      <ViewAxisSemicircle
+                        axis={selectedPrescrizione.vicino_os_ax}
+                        eye="OS"
+                        label="V"
+                        color="#22C55E"
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* DIP */}
             {selectedPrescrizione.dip && (
