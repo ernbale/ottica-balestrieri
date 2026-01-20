@@ -162,15 +162,16 @@ function ClientiPageContent() {
   }, [success])
 
   // Filtra clienti
+  const searchLower = (search || '').toLowerCase()
   const filteredClienti = clienti.filter(
     (c) =>
-      c.nome.toLowerCase().includes(search.toLowerCase()) ||
-      c.cognome.toLowerCase().includes(search.toLowerCase()) ||
-      c.codice.toLowerCase().includes(search.toLowerCase()) ||
-      c.email?.toLowerCase().includes(search.toLowerCase()) ||
-      c.cellulare?.includes(search) ||
-      c.telefono?.includes(search) ||
-      c.codice_fiscale?.toLowerCase().includes(search.toLowerCase())
+      (c.nome || '').toLowerCase().includes(searchLower) ||
+      (c.cognome || '').toLowerCase().includes(searchLower) ||
+      (c.codice || '').toLowerCase().includes(searchLower) ||
+      (c.email || '').toLowerCase().includes(searchLower) ||
+      (c.cellulare || '').includes(search) ||
+      (c.telefono || '').includes(search) ||
+      (c.codice_fiscale || '').toLowerCase().includes(searchLower)
   )
 
   // Statistiche
@@ -506,6 +507,7 @@ function ClientiPageContent() {
               placeholder="Cerca per nome, codice, CF, telefono..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              autoComplete="off"
               className="input-base pl-10"
             />
           </div>
