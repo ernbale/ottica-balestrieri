@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MainLayout } from '@/components/layout'
 import { Card, Button, Input, Select, Modal, Table, Badge, AxisWidget } from '@/components/ui'
+import { PrintPrescription } from '@/components/print'
 import type { Column } from '@/components/ui/Table'
 import {
   Plus,
@@ -12,8 +13,10 @@ import {
   User,
   Glasses,
   CircleDot,
+  X,
 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useReactToPrint } from 'react-to-print'
 
 // Mock data
 const mockPrescrizioni = [
@@ -116,6 +119,19 @@ export default function PrescrizioniPage() {
   const [formData, setFormData] = useState<PrescrizioneFormData>(emptyForm)
   const [selectedPrescrizione, setSelectedPrescrizione] = useState<Prescrizione | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
+  const printRef = useRef<HTMLDivElement>(null)
+
+  // Configurazione stampa
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: selectedPrescrizione ? `Prescrizione_${selectedPrescrizione.cliente_nome}_${selectedPrescrizione.data_prescrizione}` : 'Prescrizione',
+  })
+
+  const openPrintPreview = (prescrizione: Prescrizione) => {
+    setSelectedPrescrizione(prescrizione)
+    setIsPrintModalOpen(true)
+  }
 
   const filteredPrescrizioni = prescrizioni.filter(
     (p) =>
@@ -288,12 +304,14 @@ export default function PrescrizioniPage() {
           <button
             onClick={(e) => { e.stopPropagation(); handleView(item) }}
             className="p-2 rounded-lg hover:bg-background-secondary transition-colors"
+            title="Visualizza"
           >
             <Eye className="w-4 h-4 text-foreground-muted" />
           </button>
           <button
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); openPrintPreview(item) }}
             className="p-2 rounded-lg hover:bg-background-secondary transition-colors"
+            title="Stampa"
           >
             <Printer className="w-4 h-4 text-foreground-muted" />
           </button>
@@ -741,10 +759,74 @@ export default function PrescrizioniPage() {
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <Button variant="ghost" onClick={() => setIsViewModalOpen(false)}>Chiudi</Button>
-              <Button variant="outline" leftIcon={<Printer className="w-4 h-4" />}>Stampa</Button>
+              <Button
+                variant="outline"
+                leftIcon={<Printer className="w-4 h-4" />}
+                onClick={() => {
+                  setIsViewModalOpen(false)
+                  openPrintPreview(selectedPrescrizione)
+                }}
+              >
+                Stampa
+              </Button>
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal Anteprima Stampa */}
+      <Modal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        title="Anteprima Stampa Prescrizione"
+        size="full"
+      >
+        <div className="space-y-4">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between p-3 bg-stone-100 dark:bg-stone-800 rounded-lg">
+            <p className="text-sm text-foreground-muted">
+              Anteprima del documento che verrà stampato
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setIsPrintModalOpen(false)}>
+                Annulla
+              </Button>
+              <Button variant="primary" leftIcon={<Printer className="w-4 h-4" />} onClick={() => handlePrint()}>
+                Stampa
+              </Button>
+            </div>
+          </div>
+
+          {/* Anteprima */}
+          <div className="border border-border rounded-lg overflow-auto max-h-[70vh] bg-gray-100 p-4">
+            {selectedPrescrizione && (
+              <PrintPrescription
+                ref={printRef}
+                data={{
+                  cliente_nome: selectedPrescrizione.cliente_nome,
+                  data_prescrizione: selectedPrescrizione.data_prescrizione,
+                  prescrittore: selectedPrescrizione.prescrittore,
+                  tipo: selectedPrescrizione.tipo as 'occhiali' | 'lac',
+                  lontano_od_sph: selectedPrescrizione.lontano_od_sph,
+                  lontano_od_cyl: selectedPrescrizione.lontano_od_cyl,
+                  lontano_od_ax: selectedPrescrizione.lontano_od_ax,
+                  lontano_os_sph: selectedPrescrizione.lontano_os_sph,
+                  lontano_os_cyl: selectedPrescrizione.lontano_os_cyl,
+                  lontano_os_ax: selectedPrescrizione.lontano_os_ax,
+                  vicino_od_sph: selectedPrescrizione.vicino_od_sph,
+                  vicino_od_cyl: selectedPrescrizione.vicino_od_cyl,
+                  vicino_od_ax: selectedPrescrizione.vicino_od_ax,
+                  vicino_os_sph: selectedPrescrizione.vicino_os_sph,
+                  vicino_os_cyl: selectedPrescrizione.vicino_os_cyl,
+                  vicino_os_ax: selectedPrescrizione.vicino_os_ax,
+                  add_od: selectedPrescrizione.add_od,
+                  add_os: selectedPrescrizione.add_os,
+                  dip: selectedPrescrizione.dip,
+                }}
+              />
+            )}
+          </div>
+        </div>
       </Modal>
     </MainLayout>
   )
