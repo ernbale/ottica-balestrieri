@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout'
 import { Card, Button, Input, Table, Modal, Badge, ConfirmModal } from '@/components/ui'
@@ -105,7 +105,7 @@ function generateClientCode(): string {
   return `CLI-${timestamp.slice(-4)}${random}`
 }
 
-export default function ClientiPage() {
+function ClientiPageContent() {
   const searchParams = useSearchParams()
   const [clienti, setClienti] = useState<Cliente[]>([])
   const [search, setSearch] = useState('')
@@ -965,5 +965,19 @@ export default function ClientiPage() {
         isLoading={isSaving}
       />
     </MainLayout>
+  )
+}
+
+export default function ClientiPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout title="Clienti">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
+    }>
+      <ClientiPageContent />
+    </Suspense>
   )
 }

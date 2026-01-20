@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout'
 import { Card, Button, Badge, Modal, Input, Select } from '@/components/ui'
@@ -115,7 +115,7 @@ const orari = [
 
 const giorniSettimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 
-export default function AppuntamentiPage() {
+function AppuntamentiPageContent() {
   const searchParams = useSearchParams()
   const [appuntamenti, setAppuntamenti] = useState(mockAppuntamenti)
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -580,5 +580,19 @@ export default function AppuntamentiPage() {
         </div>
       </Modal>
     </MainLayout>
+  )
+}
+
+export default function AppuntamentiPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout title="Appuntamenti">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
+    }>
+      <AppuntamentiPageContent />
+    </Suspense>
   )
 }

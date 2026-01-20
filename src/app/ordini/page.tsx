@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout'
 import { Card, CardHeader, Button, Input, Select, Modal, Table, Badge, StatusBadge } from '@/components/ui'
@@ -274,7 +274,7 @@ function formatCurrency(value: number): string {
 // MAIN COMPONENT
 // ============================================
 
-export default function OrdiniPage() {
+function OrdiniPageContent() {
   const searchParams = useSearchParams()
   const [ordini, setOrdini] = useState(mockOrdini)
   const [search, setSearch] = useState('')
@@ -1554,5 +1554,19 @@ export default function OrdiniPage() {
         )}
       </Modal>
     </MainLayout>
+  )
+}
+
+export default function OrdiniPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout title="Ordini">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
+    }>
+      <OrdiniPageContent />
+    </Suspense>
   )
 }
