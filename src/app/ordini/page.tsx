@@ -299,8 +299,12 @@ export default function OrdiniPage() {
     uso_prescrizione: 'lontano' as 'lontano' | 'vicino' | 'intermedio' | 'progressiva',
 
     // Step 3 - Montatura
+    montatura_tipo: 'database' as 'database' | 'cliente' | 'libera',
     montatura_id: '',
     montatura: null as Montatura | null,
+    montatura_cliente_descrizione: '',
+    montatura_libera_nome: '',
+    montatura_libera_prezzo: 0,
 
     // Step 4 - Lenti
     lente_tipo: '',
@@ -382,7 +386,14 @@ export default function OrdiniPage() {
 
   // Calcolo totale ordine
   const calcolaTotale = useMemo(() => {
-    const montatura = wizardData.montatura?.prezzo || 0
+    let montatura = 0
+    if (wizardData.montatura_tipo === 'database') {
+      montatura = wizardData.montatura?.prezzo || 0
+    } else if (wizardData.montatura_tipo === 'libera') {
+      montatura = wizardData.montatura_libera_prezzo || 0
+    }
+    // montatura_tipo === 'cliente' => prezzo 0 (il cliente porta la sua)
+
     const lenti = calcolaPrezzolenti
     const subtotale = montatura + lenti
     const scontoPerc = subtotale * (wizardData.sconto_percentuale / 100)
@@ -391,7 +402,7 @@ export default function OrdiniPage() {
     const saldo = totale - wizardData.acconto
 
     return { montatura, lenti, subtotale, scontoPerc, scontoEuro, totale, saldo: Math.max(0, saldo) }
-  }, [wizardData.montatura, calcolaPrezzolenti, wizardData.sconto_percentuale, wizardData.sconto_euro, wizardData.acconto])
+  }, [wizardData.montatura, wizardData.montatura_tipo, wizardData.montatura_libera_prezzo, calcolaPrezzolenti, wizardData.sconto_percentuale, wizardData.sconto_euro, wizardData.acconto])
 
   const resetWizard = () => {
     setCurrentStep(1)
@@ -404,8 +415,12 @@ export default function OrdiniPage() {
       prescrizione_id: '',
       prescrizione: null,
       uso_prescrizione: 'lontano',
+      montatura_tipo: 'database',
       montatura_id: '',
       montatura: null,
+      montatura_cliente_descrizione: '',
+      montatura_libera_nome: '',
+      montatura_libera_prezzo: 0,
       lente_tipo: '',
       lente_materiale: '',
       lente_trattamenti: [],
@@ -428,7 +443,11 @@ export default function OrdiniPage() {
     switch (step) {
       case 1: return !!wizardData.cliente_id
       case 2: return !!wizardData.prescrizione_id
-      case 3: return !!wizardData.montatura_id
+      case 3:
+        if (wizardData.montatura_tipo === 'database') return !!wizardData.montatura_id
+        if (wizardData.montatura_tipo === 'cliente') return !!wizardData.montatura_cliente_descrizione
+        if (wizardData.montatura_tipo === 'libera') return !!wizardData.montatura_libera_nome
+        return false
       case 4: return !!wizardData.lente_tipo && !!wizardData.lente_materiale
       case 5: return !!wizardData.data_consegna_prevista
       default: return true
@@ -728,100 +747,214 @@ export default function OrdiniPage() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Seleziona Montatura</h3>
 
-            {/* Filtri */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-                <input
-                  type="text"
-                  placeholder="Cerca per nome o marca..."
-                  value={montaturaSearch}
-                  onChange={(e) => setMontaturaSearch(e.target.value)}
-                  className="input-base pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                {[
-                  { value: 'tutti', label: 'Tutti', icon: Package },
-                  { value: 'vista', label: 'Vista', icon: Glasses },
-                  { value: 'sole', label: 'Sole', icon: Sun },
-                ].map((cat) => {
-                  const Icon = cat.icon
-                  return (
+            {/* Tipo di montatura */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'database', label: 'Da Magazzino', icon: Package },
+                { value: 'cliente', label: 'Del Cliente', icon: User },
+                { value: 'libera', label: 'Inserimento Libero', icon: Edit2 },
+              ].map((tipo) => {
+                const Icon = tipo.icon
+                return (
+                  <button
+                    key={tipo.value}
+                    onClick={() => setWizardData({
+                      ...wizardData,
+                      montatura_tipo: tipo.value as 'database' | 'cliente' | 'libera',
+                      // Reset selezioni quando si cambia tipo
+                      montatura_id: '',
+                      montatura: null,
+                      montatura_cliente_descrizione: '',
+                      montatura_libera_nome: '',
+                      montatura_libera_prezzo: 0,
+                    })}
+                    className={clsx(
+                      'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border',
+                      wizardData.montatura_tipo === tipo.value
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-background-secondary border-border hover:border-primary/50'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tipo.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Contenuto in base al tipo */}
+            {wizardData.montatura_tipo === 'database' && (
+              <>
+                {/* Filtri */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
+                    <input
+                      type="text"
+                      placeholder="Cerca per nome o marca..."
+                      value={montaturaSearch}
+                      onChange={(e) => setMontaturaSearch(e.target.value)}
+                      className="input-base pl-10"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {[
+                      { value: 'tutti', label: 'Tutti', icon: Package },
+                      { value: 'vista', label: 'Vista', icon: Glasses },
+                      { value: 'sole', label: 'Sole', icon: Sun },
+                    ].map((cat) => {
+                      const Icon = cat.icon
+                      return (
+                        <button
+                          key={cat.value}
+                          onClick={() => setMontaturaCategoria(cat.value as any)}
+                          className={clsx(
+                            'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                            montaturaCategoria === cat.value
+                              ? 'bg-primary text-white'
+                              : 'bg-background-secondary hover:bg-background-secondary/80'
+                          )}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {cat.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Grid montature */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[280px] overflow-y-auto">
+                  {filteredMontature.map((mont) => (
                     <button
-                      key={cat.value}
-                      onClick={() => setMontaturaCategoria(cat.value as any)}
+                      key={mont.id}
+                      onClick={() => setWizardData({
+                        ...wizardData,
+                        montatura_id: mont.id,
+                        montatura: mont,
+                      })}
                       className={clsx(
-                        'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                        montaturaCategoria === cat.value
-                          ? 'bg-primary text-white'
-                          : 'bg-background-secondary hover:bg-background-secondary/80'
+                        'flex items-start gap-3 p-3 rounded-lg border transition-all text-left',
+                        wizardData.montatura_id === mont.id
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/50'
                       )}
                     >
-                      <Icon className="w-4 h-4" />
-                      {cat.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Grid montature */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto">
-              {filteredMontature.map((mont) => (
-                <button
-                  key={mont.id}
-                  onClick={() => setWizardData({
-                    ...wizardData,
-                    montatura_id: mont.id,
-                    montatura: mont,
-                  })}
-                  className={clsx(
-                    'flex items-start gap-3 p-3 rounded-lg border transition-all text-left',
-                    wizardData.montatura_id === mont.id
-                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                      : 'border-border hover:border-primary/50'
-                  )}
-                >
-                  <div className={clsx(
-                    'w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0',
-                    mont.categoria === 'vista' ? 'bg-primary/10' : 'bg-secondary/10'
-                  )}>
-                    {mont.categoria === 'vista'
-                      ? <Glasses className="w-7 h-7 text-primary" />
-                      : <Sun className="w-7 h-7 text-secondary" />
-                    }
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium">{mont.nome}</p>
-                        <p className="text-sm text-foreground-muted">{mont.marca} • {mont.colore}</p>
-                      </div>
-                      {wizardData.montatura_id === mont.id && (
-                        <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-primary font-semibold">{formatCurrency(mont.prezzo)}</span>
-                      <span className={clsx(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        mont.quantita > 2
-                          ? 'bg-success/10 text-success'
-                          : mont.quantita > 0
-                            ? 'bg-warning/10 text-warning'
-                            : 'bg-error/10 text-error'
+                      <div className={clsx(
+                        'w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0',
+                        mont.categoria === 'vista' ? 'bg-primary/10' : 'bg-secondary/10'
                       )}>
-                        {mont.quantita > 0 ? `${mont.quantita} disp.` : 'Esaurito'}
-                      </span>
+                        {mont.categoria === 'vista'
+                          ? <Glasses className="w-7 h-7 text-primary" />
+                          : <Sun className="w-7 h-7 text-secondary" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium">{mont.nome}</p>
+                            <p className="text-sm text-foreground-muted">{mont.marca} • {mont.colore}</p>
+                          </div>
+                          {wizardData.montatura_id === mont.id && (
+                            <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-primary font-semibold">{formatCurrency(mont.prezzo)}</span>
+                          <span className={clsx(
+                            'text-xs px-2 py-0.5 rounded-full',
+                            mont.quantita > 2
+                              ? 'bg-success/10 text-success'
+                              : mont.quantita > 0
+                                ? 'bg-warning/10 text-warning'
+                                : 'bg-error/10 text-error'
+                          )}>
+                            {mont.quantita > 0 ? `${mont.quantita} disp.` : 'Esaurito'}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {filteredMontature.length === 0 && (
+                  <p className="text-center text-foreground-muted py-8">Nessuna montatura trovata</p>
+                )}
+              </>
+            )}
+
+            {wizardData.montatura_tipo === 'cliente' && (
+              <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center flex-shrink-0">
+                    <User className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-1">Montatura del Cliente</h4>
+                    <p className="text-sm text-blue-600 dark:text-blue-300 mb-4">
+                      Il cliente porta la propria montatura. Non verrà addebitato alcun costo per la montatura.
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-1.5">
+                        Descrizione montatura *
+                      </label>
+                      <input
+                        type="text"
+                        value={wizardData.montatura_cliente_descrizione}
+                        onChange={(e) => setWizardData({ ...wizardData, montatura_cliente_descrizione: e.target.value })}
+                        placeholder="Es: Montatura propria del cliente - Ray-Ban nera"
+                        className="input-base"
+                      />
                     </div>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              </div>
+            )}
 
-            {filteredMontature.length === 0 && (
-              <p className="text-center text-foreground-muted py-8">Nessuna montatura trovata</p>
+            {wizardData.montatura_tipo === 'libera' && (
+              <div className="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-800 flex items-center justify-center flex-shrink-0">
+                    <Edit2 className="w-6 h-6 text-amber-600 dark:text-amber-300" />
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1">Montatura Libera</h4>
+                      <p className="text-sm text-amber-600 dark:text-amber-300">
+                        Inserisci i dati di una montatura non presente nel magazzino.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-amber-800 dark:text-amber-200 mb-1.5">
+                          Nome/Descrizione montatura *
+                        </label>
+                        <input
+                          type="text"
+                          value={wizardData.montatura_libera_nome}
+                          onChange={(e) => setWizardData({ ...wizardData, montatura_libera_nome: e.target.value })}
+                          placeholder="Es: Ray-Ban RB5154 Tartaruga"
+                          className="input-base"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-amber-800 dark:text-amber-200 mb-1.5">
+                          Prezzo (€)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={wizardData.montatura_libera_prezzo || ''}
+                          onChange={(e) => setWizardData({ ...wizardData, montatura_libera_prezzo: parseFloat(e.target.value) || 0 })}
+                          placeholder="0.00"
+                          className="input-base"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )
@@ -1029,14 +1162,47 @@ export default function OrdiniPage() {
             {/* Montatura e Lenti */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Montatura */}
-              <div className="p-4 border border-border rounded-lg">
+              <div className={clsx(
+                'p-4 border rounded-lg',
+                wizardData.montatura_tipo === 'cliente' ? 'border-blue-300 bg-blue-50/50 dark:bg-blue-900/10' :
+                wizardData.montatura_tipo === 'libera' ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-900/10' :
+                'border-border'
+              )}>
                 <span className="font-medium flex items-center gap-2 mb-2">
-                  <Glasses className="w-4 h-4 text-foreground-muted" />
+                  {wizardData.montatura_tipo === 'cliente' ? (
+                    <User className="w-4 h-4 text-blue-500" />
+                  ) : wizardData.montatura_tipo === 'libera' ? (
+                    <Edit2 className="w-4 h-4 text-amber-500" />
+                  ) : (
+                    <Glasses className="w-4 h-4 text-foreground-muted" />
+                  )}
                   Montatura
+                  {wizardData.montatura_tipo === 'cliente' && (
+                    <Badge variant="info" size="sm">Del Cliente</Badge>
+                  )}
+                  {wizardData.montatura_tipo === 'libera' && (
+                    <Badge variant="warning" size="sm">Libera</Badge>
+                  )}
                 </span>
-                <p className="font-semibold">{wizardData.montatura?.nome}</p>
-                <p className="text-sm text-foreground-muted">{wizardData.montatura?.marca} • {wizardData.montatura?.colore}</p>
-                <p className="text-primary font-semibold mt-2">{formatCurrency(wizardData.montatura?.prezzo || 0)}</p>
+                {wizardData.montatura_tipo === 'database' && wizardData.montatura && (
+                  <>
+                    <p className="font-semibold">{wizardData.montatura.nome}</p>
+                    <p className="text-sm text-foreground-muted">{wizardData.montatura.marca} • {wizardData.montatura.colore}</p>
+                    <p className="text-primary font-semibold mt-2">{formatCurrency(wizardData.montatura.prezzo)}</p>
+                  </>
+                )}
+                {wizardData.montatura_tipo === 'cliente' && (
+                  <>
+                    <p className="font-semibold">{wizardData.montatura_cliente_descrizione}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">Prezzo: €0,00 (montatura del cliente)</p>
+                  </>
+                )}
+                {wizardData.montatura_tipo === 'libera' && (
+                  <>
+                    <p className="font-semibold">{wizardData.montatura_libera_nome}</p>
+                    <p className="text-primary font-semibold mt-2">{formatCurrency(wizardData.montatura_libera_prezzo)}</p>
+                  </>
+                )}
               </div>
 
               {/* Lenti */}
