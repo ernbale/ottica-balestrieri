@@ -104,98 +104,141 @@ function formatDiottria(value: number | null): string {
   return `${sign}${value.toFixed(2)}`
 }
 
-// Componente per visualizzare l'asse nel sistema TABO
+// Componente per visualizzare l'asse nel sistema TABO - Stile prescrizione italiana
 interface ViewAxisSemicircleProps {
   axis: number | null
   eye: 'OD' | 'OS'
   label?: string
   color?: string
-  size?: 'sm' | 'md'
 }
 
-function ViewAxisSemicircle({ axis, eye, label = '', color = '#F97316', size = 'md' }: ViewAxisSemicircleProps) {
+function ViewAxisSemicircle({ axis, eye, label = '', color = '#3B82F6' }: ViewAxisSemicircleProps) {
   if (axis === null) return null
 
-  const width = size === 'sm' ? 100 : 140
-  const height = size === 'sm' ? 60 : 80
-  const radius = size === 'sm' ? 40 : 55
+  // Dimensioni GRANDI per leggibilità
+  const width = 260
+  const height = 160
+  const radius = 100
   const cx = width / 2
-  const cy = height - 5
+  const cy = height - 15
 
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
-  // Per OD: l'arco va da 180° (sinistra) a 0° (destra)
-  // Per OS: speculare
   const angleRad = (Math.PI * (180 - axis)) / 180
-  const lineLength = radius - 5
-  const x2 = cx + lineLength * Math.cos(angleRad)
-  const y2 = cy - lineLength * Math.sin(angleRad)
+
+  // La linea attraversa il centro e va OLTRE su entrambi i lati
+  const lineExtension = radius + 15
+  const x1 = cx - lineExtension * Math.cos(angleRad)
+  const y1 = cy + lineExtension * Math.sin(angleRad)
+  const x2 = cx + lineExtension * Math.cos(angleRad)
+  const y2 = cy - lineExtension * Math.sin(angleRad)
 
   return (
     <div className="flex flex-col items-center">
       <svg width={width} height={height} className="overflow-visible">
-        {/* Semicerchio base */}
-        <path
-          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
-          fill="none"
-          stroke="#D1D5DB"
+        {/* Linea base orizzontale */}
+        <line
+          x1={cx - radius - 10}
+          y1={cy}
+          x2={cx + radius + 10}
+          y2={cy}
+          stroke="#4B5563"
           strokeWidth="2"
         />
 
-        {/* Tacche gradi */}
-        {[0, 30, 60, 90, 120, 150, 180].map((deg) => {
+        {/* Semicerchio principale - più spesso */}
+        <path
+          d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+          fill="none"
+          stroke="#6B7280"
+          strokeWidth="3"
+        />
+
+        {/* Tacche gradi - ogni 10° con numeri ogni 30° */}
+        {Array.from({ length: 19 }, (_, i) => i * 10).map((deg) => {
           const rad = (Math.PI * (180 - deg)) / 180
-          const x1 = cx + (radius - 3) * Math.cos(rad)
-          const y1 = cy - (radius - 3) * Math.sin(rad)
-          const x2t = cx + (radius + 3) * Math.cos(rad)
-          const y2t = cy - (radius + 3) * Math.sin(rad)
+          const isMain = deg % 30 === 0
+          const tickInner = radius - (isMain ? 12 : 6)
+          const tickOuter = radius + (isMain ? 8 : 4)
+
+          const x1t = cx + tickInner * Math.cos(rad)
+          const y1t = cy - tickInner * Math.sin(rad)
+          const x2t = cx + tickOuter * Math.cos(rad)
+          const y2t = cy - tickOuter * Math.sin(rad)
+
           return (
             <g key={deg}>
-              <line x1={x1} y1={y1} x2={x2t} y2={y2t} stroke="#9CA3AF" strokeWidth="1" />
-              <text
-                x={cx + (radius + 12) * Math.cos(rad)}
-                y={cy - (radius + 12) * Math.sin(rad)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={size === 'sm' ? '8' : '9'}
-                fill="#6B7280"
-              >
-                {deg}°
-              </text>
+              <line
+                x1={x1t}
+                y1={y1t}
+                x2={x2t}
+                y2={y2t}
+                stroke={isMain ? "#374151" : "#9CA3AF"}
+                strokeWidth={isMain ? 2 : 1}
+              />
+              {isMain && (
+                <text
+                  x={cx + (radius + 25) * Math.cos(rad)}
+                  y={cy - (radius + 25) * Math.sin(rad)}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="14"
+                  fontWeight="bold"
+                  fill="#374151"
+                  className="dark:fill-gray-300"
+                >
+                  {deg}°
+                </text>
+              )}
             </g>
           )
         })}
 
-        {/* Linea indicatore asse */}
+        {/* LINEA ASSE - attraversa il centro e va oltre */}
         <line
-          x1={cx}
-          y1={cy}
+          x1={x1}
+          y1={y1}
           x2={x2}
           y2={y2}
           stroke={color}
-          strokeWidth="3"
+          strokeWidth="4"
           strokeLinecap="round"
         />
 
-        {/* Punto centrale */}
-        <circle cx={cx} cy={cy} r="4" fill={color} />
+        {/* Freccia all'estremità superiore della linea */}
+        <circle
+          cx={x2}
+          cy={y2}
+          r="6"
+          fill={color}
+        />
 
-        {/* Label */}
-        {label && (
-          <text
-            x={cx}
-            y={cy - radius - 18}
-            textAnchor="middle"
-            fontSize={size === 'sm' ? '10' : '12'}
-            fontWeight="bold"
-            fill={color}
-          >
-            {label}
-          </text>
-        )}
+        {/* Punto centrale grande */}
+        <circle cx={cx} cy={cy} r="8" fill={color} stroke="white" strokeWidth="2" />
+
+        {/* Etichetta occhio */}
+        <text
+          x={15}
+          y={cy}
+          fontSize="16"
+          fontWeight="bold"
+          fill="#6B7280"
+          dominantBaseline="middle"
+        >
+          {eye}
+        </text>
+
+        {/* Valore asse grande e visibile */}
+        <text
+          x={cx}
+          y={cy - radius - 40}
+          textAnchor="middle"
+          fontSize="20"
+          fontWeight="bold"
+          fill={color}
+        >
+          {label ? `${label}: ` : ''}{axis}°
+        </text>
       </svg>
-      <span className="text-xs font-mono mt-1" style={{ color }}>
-        {axis}°
-      </span>
     </div>
   )
 }
@@ -842,51 +885,17 @@ export default function PrescrizioniPage() {
               </table>
             </div>
 
-            {/* Diagrammi Assi - Sistema TABO */}
+            {/* Diagrammi Assi - Sistema TABO GRANDI */}
             {(selectedPrescrizione.lontano_od_ax || selectedPrescrizione.lontano_os_ax) && (
-              <div className="grid grid-cols-2 gap-6 p-4 bg-stone-50 dark:bg-stone-900 rounded-xl">
-                {/* OD */}
-                <div className="flex flex-col items-center">
-                  <p className="text-sm font-medium text-primary mb-2">OD - Occhio Destro</p>
-                  <ViewAxisSemicircle
-                    axis={selectedPrescrizione.lontano_od_ax}
-                    eye="OD"
-                    label="L"
-                    color="#3B82F6"
-                  />
-                  {selectedPrescrizione.vicino_od_ax && selectedPrescrizione.vicino_od_ax !== selectedPrescrizione.lontano_od_ax && (
-                    <div className="mt-2">
-                      <ViewAxisSemicircle
-                        axis={selectedPrescrizione.vicino_od_ax}
-                        eye="OD"
-                        label="V"
-                        color="#22C55E"
-                        size="sm"
-                      />
-                    </div>
-                  )}
-                </div>
-                {/* OS */}
-                <div className="flex flex-col items-center">
-                  <p className="text-sm font-medium text-secondary mb-2">OS - Occhio Sinistro</p>
-                  <ViewAxisSemicircle
-                    axis={selectedPrescrizione.lontano_os_ax}
-                    eye="OS"
-                    label="L"
-                    color="#3B82F6"
-                  />
-                  {selectedPrescrizione.vicino_os_ax && selectedPrescrizione.vicino_os_ax !== selectedPrescrizione.lontano_os_ax && (
-                    <div className="mt-2">
-                      <ViewAxisSemicircle
-                        axis={selectedPrescrizione.vicino_os_ax}
-                        eye="OS"
-                        label="V"
-                        color="#22C55E"
-                        size="sm"
-                      />
-                    </div>
-                  )}
-                </div>
+              <div className="flex justify-center gap-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-xl">
+                <ViewAxisSemicircle
+                  axis={selectedPrescrizione.lontano_od_ax}
+                  eye="OD"
+                />
+                <ViewAxisSemicircle
+                  axis={selectedPrescrizione.lontano_os_ax}
+                  eye="OS"
+                />
               </div>
             )}
 

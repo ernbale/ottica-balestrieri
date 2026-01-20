@@ -53,115 +53,120 @@ function formatDiottria(value: number | null | undefined): string {
 
 // Componente SVG per disegnare il semicerchio dell'asse (Sistema TABO italiano)
 // Nel sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
+// VERSIONE GRANDE con linea che attraversa il centro
 function AxisSemicircle({
   axis,
   eye,
-  size = 120
 }: {
   axis: number | null
   eye: 'OD' | 'OS'
-  size?: number
 }) {
-  const center = size / 2
-  const radius = (size / 2) - 20
-  const semicircleY = center + 10 // Abbassa il semicerchio per fare spazio al titolo
+  // Dimensioni GRANDI per stampa professionale
+  const width = 220
+  const height = 150
+  const radius = 80
+  const cx = width / 2
+  const cy = height - 25 // Centro del semicerchio
 
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
-  // L'angolo in radianti: 0° = 0 rad (destra), 90° = π/2 (alto), 180° = π (sinistra)
   const axisRad = axis !== null ? (axis * Math.PI) / 180 : null
 
-  // Calcola i punti per la linea dell'asse
+  // La linea ATTRAVERSA il centro e va OLTRE su entrambi i lati
   const getAxisLine = () => {
     if (axisRad === null) return null
-    const x1 = center + radius * Math.cos(axisRad)
-    const y1 = semicircleY - radius * Math.sin(axisRad)
-    const x2 = center - radius * Math.cos(axisRad)
-    const y2 = semicircleY + radius * Math.sin(axisRad)
+    const extension = radius + 20 // La linea va oltre il semicerchio
+    // Punto sulla parte superiore (verso l'asse indicato)
+    const x1 = cx + extension * Math.cos(axisRad)
+    const y1 = cy - extension * Math.sin(axisRad)
+    // Punto opposto (sotto la linea base, attraversa il centro)
+    const x2 = cx - extension * Math.cos(axisRad)
+    const y2 = cy + extension * Math.sin(axisRad)
     return { x1, y1, x2, y2 }
   }
 
   const axisLine = getAxisLine()
 
-  // Genera i tick marks e le etichette per i gradi
-  const ticks = [0, 30, 60, 90, 120, 150, 180]
-  const labels = [0, 45, 90, 135, 180]
+  // Tick marks ogni 10° con etichette ogni 30°
+  const allTicks = Array.from({ length: 19 }, (_, i) => i * 10) // 0, 10, 20, ... 180
+  const labelTicks = [0, 30, 60, 90, 120, 150, 180]
 
   return (
-    <svg width={size} height={size * 0.9} viewBox={`0 0 ${size} ${size * 0.9}`} className="axis-semicircle">
-      {/* Titolo occhio */}
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="axis-semicircle">
+      {/* Titolo occhio GRANDE */}
       <text
-        x={center}
-        y="14"
+        x={cx}
+        y="22"
         textAnchor="middle"
-        fontSize="13"
+        fontSize="18"
         fontWeight="bold"
         fill="#1F2937"
       >
         {eye}
       </text>
 
-      {/* Semicerchio superiore (solo la parte sopra) */}
+      {/* Linea base orizzontale estesa */}
+      <line
+        x1={cx - radius - 15}
+        y1={cy}
+        x2={cx + radius + 15}
+        y2={cy}
+        stroke="#374151"
+        strokeWidth="2"
+      />
+
+      {/* Semicerchio principale - più spesso */}
       <path
-        d={`M ${center - radius} ${semicircleY} A ${radius} ${radius} 0 0 1 ${center + radius} ${semicircleY}`}
+        d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
         fill="none"
         stroke="#374151"
-        strokeWidth="1.5"
+        strokeWidth="2.5"
       />
 
-      {/* Linea base orizzontale */}
-      <line
-        x1={center - radius - 5}
-        y1={semicircleY}
-        x2={center + radius + 5}
-        y2={semicircleY}
-        stroke="#374151"
-        strokeWidth="1"
-      />
-
-      {/* Tick marks */}
-      {ticks.map((deg) => {
+      {/* Tick marks - ogni 10° */}
+      {allTicks.map((deg) => {
         const rad = (deg * Math.PI) / 180
-        const innerR = radius - 4
-        const outerR = radius + 4
-        const x1 = center + innerR * Math.cos(rad)
-        const y1 = semicircleY - innerR * Math.sin(rad)
-        const x2 = center + outerR * Math.cos(rad)
-        const y2 = semicircleY - outerR * Math.sin(rad)
+        const isLabel = labelTicks.includes(deg)
+        const innerR = radius - (isLabel ? 10 : 5)
+        const outerR = radius + (isLabel ? 8 : 4)
+        const x1t = cx + innerR * Math.cos(rad)
+        const y1t = cy - innerR * Math.sin(rad)
+        const x2t = cx + outerR * Math.cos(rad)
+        const y2t = cy - outerR * Math.sin(rad)
         return (
           <line
             key={deg}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke="#6B7280"
-            strokeWidth="1"
+            x1={x1t}
+            y1={y1t}
+            x2={x2t}
+            y2={y2t}
+            stroke={isLabel ? "#1F2937" : "#9CA3AF"}
+            strokeWidth={isLabel ? 2 : 1}
           />
         )
       })}
 
-      {/* Etichette gradi */}
-      {labels.map((deg) => {
+      {/* Etichette gradi GRANDI */}
+      {labelTicks.map((deg) => {
         const rad = (deg * Math.PI) / 180
-        const labelR = radius + 14
-        const x = center + labelR * Math.cos(rad)
-        const y = semicircleY - labelR * Math.sin(rad)
+        const labelR = radius + 22
+        const x = cx + labelR * Math.cos(rad)
+        const y = cy - labelR * Math.sin(rad)
         return (
           <text
             key={deg}
             x={x}
-            y={y + 4}
+            y={y + 5}
             textAnchor="middle"
-            fontSize="9"
+            fontSize="13"
+            fontWeight="bold"
             fill="#374151"
-            fontWeight={deg === 0 || deg === 90 || deg === 180 ? 'bold' : 'normal'}
           >
             {deg}°
           </text>
         )
       })}
 
-      {/* Linea dell'asse (in rosso) */}
+      {/* LINEA ASSE - ATTRAVERSA IL CENTRO E VA OLTRE */}
       {axisLine && (
         <>
           <line
@@ -170,43 +175,45 @@ function AxisSemicircle({
             x2={axisLine.x2}
             y2={axisLine.y2}
             stroke="#DC2626"
-            strokeWidth="2.5"
+            strokeWidth="3.5"
             strokeLinecap="round"
           />
-          {/* Freccia all'estremità */}
+          {/* Pallino all'estremità superiore */}
           <circle
             cx={axisLine.x1}
             cy={axisLine.y1}
-            r="4"
+            r="6"
             fill="#DC2626"
           />
         </>
       )}
 
-      {/* Punto centrale */}
+      {/* Punto centrale GRANDE */}
       <circle
-        cx={center}
-        cy={semicircleY}
-        r="3"
-        fill="#1F2937"
+        cx={cx}
+        cy={cy}
+        r="6"
+        fill="#DC2626"
+        stroke="white"
+        strokeWidth="2"
       />
 
-      {/* Valore asse sotto */}
+      {/* Box con valore asse - PIÙ GRANDE */}
       <rect
-        x={center - 22}
-        y={semicircleY + 8}
-        width="44"
-        height="18"
+        x={cx - 32}
+        y={cy + 12}
+        width="64"
+        height="26"
         fill={axis !== null ? '#FEE2E2' : '#F3F4F6'}
         stroke={axis !== null ? '#DC2626' : '#9CA3AF'}
-        strokeWidth="1"
-        rx="2"
+        strokeWidth="2"
+        rx="4"
       />
       <text
-        x={center}
-        y={semicircleY + 21}
+        x={cx}
+        y={cy + 31}
         textAnchor="middle"
-        fontSize="12"
+        fontSize="16"
         fontWeight="bold"
         fill={axis !== null ? '#DC2626' : '#6B7280'}
       >
@@ -411,10 +418,10 @@ const PrintPrescription = forwardRef<HTMLDivElement, PrintPrescriptionProps>(
           .print-prescription .axis-section {
             display: flex;
             justify-content: center;
-            gap: 20mm;
-            margin: 5mm 0;
-            padding: 5mm;
-            border: 1px solid #ddd;
+            gap: 15mm;
+            margin: 8mm 0;
+            padding: 8mm 5mm;
+            border: 2px solid #ddd;
             background: #fafafa;
           }
 
@@ -424,8 +431,8 @@ const PrintPrescription = forwardRef<HTMLDivElement, PrintPrescriptionProps>(
 
           .print-prescription .axis-title {
             font-weight: bold;
-            font-size: 10pt;
-            margin-bottom: 2mm;
+            font-size: 12pt;
+            margin-bottom: 3mm;
           }
 
           .print-prescription .measurements {
@@ -618,14 +625,14 @@ const PrintPrescription = forwardRef<HTMLDivElement, PrintPrescriptionProps>(
           </tbody>
         </table>
 
-        {/* Axis Diagrams */}
+        {/* Axis Diagrams - GRANDI E PROFESSIONALI */}
         {(data.lontano_od_ax || data.lontano_os_ax) && (
           <div className="axis-section">
             <div className="axis-container">
-              <AxisSemicircle axis={data.lontano_od_ax} eye="OD" size={120} />
+              <AxisSemicircle axis={data.lontano_od_ax} eye="OD" />
             </div>
             <div className="axis-container">
-              <AxisSemicircle axis={data.lontano_os_ax} eye="OS" size={120} />
+              <AxisSemicircle axis={data.lontano_os_ax} eye="OS" />
             </div>
           </div>
         )}
