@@ -4,9 +4,9 @@
  */
 
 // Configurazione WposWS
-// Usa 127.0.0.1 perché il browser gira sulla stessa macchina del servizio WposWS
+// WposWS gira sul PC 192.168.1.230, che comunica con la cassa 192.168.1.4
 const WPOS_CONFIG = {
-  baseUrl: 'https://127.0.0.1/WposWS',
+  baseUrl: 'https://192.168.1.230/WposWS',
   printerId: '1',
   timeout: 10000,
 }
