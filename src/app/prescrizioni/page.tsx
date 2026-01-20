@@ -803,7 +803,7 @@ export default function PrescrizioniPage() {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         title="Prescrizione"
-        size="lg"
+        size="xl"
       >
         {selectedPrescrizione && (
           <div className="space-y-6">
@@ -828,7 +828,7 @@ export default function PrescrizioniPage() {
 
             {/* Diagrammi Assi - SOPRA LA TABELLA */}
             {(selectedPrescrizione.lontano_od_ax || selectedPrescrizione.lontano_os_ax) && (
-              <div className="flex justify-center gap-2 p-3 bg-stone-50 dark:bg-stone-900 rounded-xl overflow-x-auto">
+              <div className="flex justify-center items-center gap-6 p-6 bg-stone-50 dark:bg-stone-900 rounded-xl">
                 <ViewAxisSemicircle
                   axis={selectedPrescrizione.lontano_od_ax}
                   eye="OD"
