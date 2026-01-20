@@ -114,48 +114,48 @@ interface ViewAxisSemicircleProps {
 function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
   if (axis === null) return null
 
-  // Dimensioni GRANDI per leggibilità
-  const width = 260
-  const height = 160
-  const radius = 100
+  // Dimensioni ottimizzate per modal
+  const width = 200
+  const height = 130
+  const radius = 75
   const cx = width / 2
-  const cy = height - 15
+  const cy = height - 12
 
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
   const angleRad = (Math.PI * (180 - axis)) / 180
 
   // La linea PARTE dal centro e va verso l'asse (NON attraversa)
-  const lineExtension = radius + 15
+  const lineExtension = radius + 12
   const x2 = cx + lineExtension * Math.cos(angleRad)
   const y2 = cy - lineExtension * Math.sin(angleRad)
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center flex-shrink-0">
       <svg width={width} height={height} className="overflow-visible">
         {/* Linea base orizzontale */}
         <line
-          x1={cx - radius - 10}
+          x1={cx - radius - 8}
           y1={cy}
-          x2={cx + radius + 10}
+          x2={cx + radius + 8}
           y2={cy}
           stroke="#4B5563"
           strokeWidth="2"
         />
 
-        {/* Semicerchio principale - più spesso */}
+        {/* Semicerchio principale */}
         <path
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
           fill="none"
           stroke="#6B7280"
-          strokeWidth="3"
+          strokeWidth="2.5"
         />
 
         {/* Tacche gradi - ogni 10° con numeri ogni 30° */}
         {Array.from({ length: 19 }, (_, i) => i * 10).map((deg) => {
           const rad = (Math.PI * (180 - deg)) / 180
           const isMain = deg % 30 === 0
-          const tickInner = radius - (isMain ? 12 : 6)
-          const tickOuter = radius + (isMain ? 8 : 4)
+          const tickInner = radius - (isMain ? 8 : 4)
+          const tickOuter = radius + (isMain ? 6 : 3)
 
           const x1t = cx + tickInner * Math.cos(rad)
           const y1t = cy - tickInner * Math.sin(rad)
@@ -170,15 +170,15 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
                 x2={x2t}
                 y2={y2t}
                 stroke={isMain ? "#374151" : "#9CA3AF"}
-                strokeWidth={isMain ? 2 : 1}
+                strokeWidth={isMain ? 1.5 : 1}
               />
               {isMain && (
                 <text
-                  x={cx + (radius + 25) * Math.cos(rad)}
-                  y={cy - (radius + 25) * Math.sin(rad)}
+                  x={cx + (radius + 18) * Math.cos(rad)}
+                  y={cy - (radius + 18) * Math.sin(rad)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="14"
+                  fontSize="11"
                   fontWeight="bold"
                   fill="#374151"
                   className="dark:fill-gray-300"
@@ -197,7 +197,7 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
           x2={x2}
           y2={y2}
           stroke="#3B82F6"
-          strokeWidth="4"
+          strokeWidth="3"
           strokeLinecap="round"
         />
 
@@ -205,18 +205,18 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
         <circle
           cx={x2}
           cy={y2}
-          r="6"
+          r="5"
           fill="#3B82F6"
         />
 
-        {/* Punto centrale grande */}
-        <circle cx={cx} cy={cy} r="8" fill="#3B82F6" stroke="white" strokeWidth="2" />
+        {/* Punto centrale */}
+        <circle cx={cx} cy={cy} r="6" fill="#3B82F6" stroke="white" strokeWidth="2" />
 
         {/* Etichetta occhio */}
         <text
-          x={15}
+          x={12}
           y={cy}
-          fontSize="16"
+          fontSize="14"
           fontWeight="bold"
           fill="#6B7280"
           dominantBaseline="middle"
@@ -224,12 +224,12 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
           {eye}
         </text>
 
-        {/* Valore asse grande e visibile */}
+        {/* Valore asse */}
         <text
           x={cx}
-          y={cy - radius - 40}
+          y={cy - radius - 30}
           textAnchor="middle"
-          fontSize="20"
+          fontSize="16"
           fontWeight="bold"
           fill="#3B82F6"
         >
@@ -826,6 +826,20 @@ export default function PrescrizioniPage() {
               </Badge>
             </div>
 
+            {/* Diagrammi Assi - SOPRA LA TABELLA */}
+            {(selectedPrescrizione.lontano_od_ax || selectedPrescrizione.lontano_os_ax) && (
+              <div className="flex justify-center gap-2 p-3 bg-stone-50 dark:bg-stone-900 rounded-xl overflow-x-auto">
+                <ViewAxisSemicircle
+                  axis={selectedPrescrizione.lontano_od_ax}
+                  eye="OD"
+                />
+                <ViewAxisSemicircle
+                  axis={selectedPrescrizione.lontano_os_ax}
+                  eye="OS"
+                />
+              </div>
+            )}
+
             {/* Ricetta Stile Italiano */}
             <div className="border-2 border-border rounded-xl overflow-hidden">
               <table className="w-full text-sm font-mono">
@@ -881,20 +895,6 @@ export default function PrescrizioniPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Diagrammi Assi - Sistema TABO GRANDI */}
-            {(selectedPrescrizione.lontano_od_ax || selectedPrescrizione.lontano_os_ax) && (
-              <div className="flex justify-center gap-4 p-4 bg-stone-50 dark:bg-stone-900 rounded-xl">
-                <ViewAxisSemicircle
-                  axis={selectedPrescrizione.lontano_od_ax}
-                  eye="OD"
-                />
-                <ViewAxisSemicircle
-                  axis={selectedPrescrizione.lontano_os_ax}
-                  eye="OS"
-                />
-              </div>
-            )}
 
             {/* DIP */}
             {selectedPrescrizione.dip && (
