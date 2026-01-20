@@ -122,7 +122,8 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
   const cy = height - 12
 
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
-  const angleRad = (Math.PI * (180 - axis)) / 180
+  // Formula corretta: axis * π / 180 (NON 180 - axis!)
+  const angleRad = (Math.PI * axis) / 180
 
   // La linea PARTE dal centro e va verso l'asse (NON attraversa)
   const lineExtension = radius + 12
@@ -151,8 +152,9 @@ function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
         />
 
         {/* Tacche gradi - ogni 10° con numeri ogni 30° */}
+        {/* Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra */}
         {Array.from({ length: 19 }, (_, i) => i * 10).map((deg) => {
-          const rad = (Math.PI * (180 - deg)) / 180
+          const rad = (Math.PI * deg) / 180
           const isMain = deg % 30 === 0
           const tickInner = radius - (isMain ? 8 : 4)
           const tickOuter = radius + (isMain ? 6 : 3)

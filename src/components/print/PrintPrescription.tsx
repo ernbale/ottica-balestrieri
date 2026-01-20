@@ -90,12 +90,12 @@ function AxisSemicircle({
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="axis-semicircle">
-      {/* Titolo occhio GRANDE */}
+      {/* Titolo occhio GRANDE - SOPRA il 90° */}
       <text
         x={cx}
-        y="22"
+        y="12"
         textAnchor="middle"
-        fontSize="18"
+        fontSize="16"
         fontWeight="bold"
         fill="#1F2937"
       >
