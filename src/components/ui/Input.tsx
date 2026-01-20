@@ -34,6 +34,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            autoComplete="off"
             className={clsx(
               'input-base',
               leftIcon && 'pl-10',
