@@ -105,14 +105,13 @@ function formatDiottria(value: number | null): string {
 }
 
 // Componente per visualizzare l'asse nel sistema TABO - Stile prescrizione italiana
+// Linea che PARTE dal centro (NON attraversa)
 interface ViewAxisSemicircleProps {
   axis: number | null
   eye: 'OD' | 'OS'
-  label?: string
-  color?: string
 }
 
-function ViewAxisSemicircle({ axis, eye, label = '', color = '#3B82F6' }: ViewAxisSemicircleProps) {
+function ViewAxisSemicircle({ axis, eye }: ViewAxisSemicircleProps) {
   if (axis === null) return null
 
   // Dimensioni GRANDI per leggibilità
@@ -125,10 +124,8 @@ function ViewAxisSemicircle({ axis, eye, label = '', color = '#3B82F6' }: ViewAx
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
   const angleRad = (Math.PI * (180 - axis)) / 180
 
-  // La linea attraversa il centro e va OLTRE su entrambi i lati
+  // La linea PARTE dal centro e va verso l'asse (NON attraversa)
   const lineExtension = radius + 15
-  const x1 = cx - lineExtension * Math.cos(angleRad)
-  const y1 = cy + lineExtension * Math.sin(angleRad)
   const x2 = cx + lineExtension * Math.cos(angleRad)
   const y2 = cy - lineExtension * Math.sin(angleRad)
 
@@ -193,27 +190,27 @@ function ViewAxisSemicircle({ axis, eye, label = '', color = '#3B82F6' }: ViewAx
           )
         })}
 
-        {/* LINEA ASSE - attraversa il centro e va oltre */}
+        {/* LINEA ASSE - parte dal centro e va verso l'asse */}
         <line
-          x1={x1}
-          y1={y1}
+          x1={cx}
+          y1={cy}
           x2={x2}
           y2={y2}
-          stroke={color}
+          stroke="#3B82F6"
           strokeWidth="4"
           strokeLinecap="round"
         />
 
-        {/* Freccia all'estremità superiore della linea */}
+        {/* Pallino all'estremità della linea */}
         <circle
           cx={x2}
           cy={y2}
           r="6"
-          fill={color}
+          fill="#3B82F6"
         />
 
         {/* Punto centrale grande */}
-        <circle cx={cx} cy={cy} r="8" fill={color} stroke="white" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r="8" fill="#3B82F6" stroke="white" strokeWidth="2" />
 
         {/* Etichetta occhio */}
         <text
@@ -234,9 +231,9 @@ function ViewAxisSemicircle({ axis, eye, label = '', color = '#3B82F6' }: ViewAx
           textAnchor="middle"
           fontSize="20"
           fontWeight="bold"
-          fill={color}
+          fill="#3B82F6"
         >
-          {label ? `${label}: ` : ''}{axis}°
+          {axis}°
         </text>
       </svg>
     </div>

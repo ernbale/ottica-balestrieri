@@ -53,7 +53,7 @@ function formatDiottria(value: number | null | undefined): string {
 
 // Componente SVG per disegnare il semicerchio dell'asse (Sistema TABO italiano)
 // Nel sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
-// VERSIONE GRANDE con linea che attraversa il centro
+// Linea che PARTE dal centro e va verso l'asse (NON attraversa il centro)
 function AxisSemicircle({
   axis,
   eye,
@@ -71,17 +71,15 @@ function AxisSemicircle({
   // Sistema TABO: 0° a destra, 90° in alto, 180° a sinistra
   const axisRad = axis !== null ? (axis * Math.PI) / 180 : null
 
-  // La linea ATTRAVERSA il centro e va OLTRE su entrambi i lati
+  // La linea PARTE dal centro e va verso l'asse indicato (NON attraversa)
   const getAxisLine = () => {
     if (axisRad === null) return null
-    const extension = radius + 20 // La linea va oltre il semicerchio
-    // Punto sulla parte superiore (verso l'asse indicato)
-    const x1 = cx + extension * Math.cos(axisRad)
-    const y1 = cy - extension * Math.sin(axisRad)
-    // Punto opposto (sotto la linea base, attraversa il centro)
-    const x2 = cx - extension * Math.cos(axisRad)
-    const y2 = cy + extension * Math.sin(axisRad)
-    return { x1, y1, x2, y2 }
+    const extension = radius + 15 // La linea va oltre il semicerchio
+    // Punto di arrivo (verso l'asse indicato)
+    const x2 = cx + extension * Math.cos(axisRad)
+    const y2 = cy - extension * Math.sin(axisRad)
+    // Punto di partenza = centro
+    return { x1: cx, y1: cy, x2, y2 }
   }
 
   const axisLine = getAxisLine()
@@ -576,6 +574,18 @@ const PrintPrescription = forwardRef<HTMLDivElement, PrintPrescriptionProps>(
           )}
         </div>
 
+        {/* Axis Diagrams - SOPRA LA TABELLA */}
+        {(data.lontano_od_ax || data.lontano_os_ax) && (
+          <div className="axis-section">
+            <div className="axis-container">
+              <AxisSemicircle axis={data.lontano_od_ax} eye="OD" />
+            </div>
+            <div className="axis-container">
+              <AxisSemicircle axis={data.lontano_os_ax} eye="OS" />
+            </div>
+          </div>
+        )}
+
         {/* Prescription Table */}
         <table className="rx-table">
           <thead>
@@ -624,18 +634,6 @@ const PrintPrescription = forwardRef<HTMLDivElement, PrintPrescriptionProps>(
             )}
           </tbody>
         </table>
-
-        {/* Axis Diagrams - GRANDI E PROFESSIONALI */}
-        {(data.lontano_od_ax || data.lontano_os_ax) && (
-          <div className="axis-section">
-            <div className="axis-container">
-              <AxisSemicircle axis={data.lontano_od_ax} eye="OD" />
-            </div>
-            <div className="axis-container">
-              <AxisSemicircle axis={data.lontano_os_ax} eye="OS" />
-            </div>
-          </div>
-        )}
 
         {/* Measurements */}
         <div className="measurements">
